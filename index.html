@@ -1,0 +1,1868 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⚡ AI Prompt Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ─── Reset & Base ─────────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:       #0d1117;
+  --bg2:      #161b22;
+  --bg3:      #1c2230;
+  --bg4:      #21273a;
+  --border:   #2d3748;
+  --border2:  #3d4f6e;
+  --accent:   #58a6ff;
+  --accent2:  #388bfd;
+  --green:    #3fb950;
+  --yellow:   #d29922;
+  --orange:   #f78166;
+  --purple:   #bc8cff;
+  --text:     #e6edf3;
+  --text2:    #8b949e;
+  --text3:    #484f58;
+  --tag-bg:   #1f2d45;
+  --tag-text: #58a6ff;
+  --mono:     'IBM Plex Mono', monospace;
+  --sans:     'IBM Plex Sans Thai', sans-serif;
+  --r:        6px;
+  --r2:       10px;
+  --shadow:   0 8px 32px rgba(0,0,0,.5);
+}
+html,body{height:100%;overflow:hidden}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14px;line-height:1.6}
+
+/* ─── Layout ────────────────────────────────────────────────── */
+.app{display:grid;grid-template-rows:52px 1fr;height:100vh;overflow:hidden}
+.main{display:grid;grid-template-columns:280px 1fr 440px;overflow:hidden}
+
+/* ─── Topbar ────────────────────────────────────────────────── */
+.topbar{
+  background:var(--bg2);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 20px;gap:16px;
+}
+.topbar-logo{display:flex;align-items:center;gap:8px}
+.topbar-logo .icon{font-size:20px;filter:drop-shadow(0 0 8px #58a6ff88)}
+.topbar-logo .name{font-weight:700;font-size:15px;letter-spacing:-.3px}
+.topbar-logo .ver{font-size:11px;color:var(--text3);margin-left:4px;font-family:var(--mono)}
+.topbar-actions{margin-left:auto;display:flex;gap:8px;align-items:center}
+.topbar-link{
+  color:var(--text2);font-size:12px;text-decoration:none;
+  padding:5px 12px;border-radius:var(--r);
+  border:1px solid var(--border);
+  transition:all .15s;white-space:nowrap;
+}
+.topbar-link:hover{color:var(--text);border-color:var(--border2);background:var(--bg3)}
+.topbar-badge{
+  font-size:11px;background:var(--tag-bg);color:var(--tag-text);
+  padding:2px 8px;border-radius:20px;font-family:var(--mono);
+}
+
+/* ─── Sidebar ────────────────────────────────────────────────── */
+.sidebar{
+  background:var(--bg2);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;overflow:hidden;
+}
+.sidebar-search{padding:12px 12px 8px}
+.search-box{
+  display:flex;align-items:center;gap:8px;
+  background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);
+  padding:7px 12px;transition:border-color .15s;
+}
+.search-box:focus-within{border-color:var(--accent)}
+.search-box svg{flex-shrink:0;opacity:.4}
+.search-box input{
+  background:none;border:none;outline:none;color:var(--text);
+  font-family:var(--sans);font-size:13px;width:100%;
+}
+.search-box input::placeholder{color:var(--text3)}
+
+.cat-count{
+  padding:4px 12px 6px;font-size:11px;color:var(--text3);
+  font-family:var(--mono);display:flex;justify-content:space-between;
+}
+
+.tree{flex:1;overflow-y:auto;padding:4px 8px}
+.tree::-webkit-scrollbar{width:4px}
+.tree::-webkit-scrollbar-track{background:transparent}
+.tree::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+.tree::-webkit-scrollbar-thumb:hover{background:var(--border2)}
+
+.cat-header{
+  display:flex;align-items:center;gap:6px;
+  padding:8px 8px 4px;
+  font-size:11px;font-weight:700;color:var(--yellow);
+  letter-spacing:.5px;text-transform:uppercase;
+  cursor:pointer;user-select:none;border-radius:var(--r);
+  transition:background .1s;margin-top:6px;
+}
+.cat-header:first-child{margin-top:0}
+.cat-header:hover{background:var(--bg3)}
+.cat-header .chevron{margin-left:auto;font-size:10px;transition:transform .2s;color:var(--text3)}
+.cat-header.collapsed .chevron{transform:rotate(-90deg)}
+
+.cat-items{overflow:hidden;transition:max-height .2s ease}
+.cat-items.collapsed{max-height:0!important}
+
+.tmpl-item{
+  display:flex;align-items:center;gap:8px;
+  padding:7px 10px;border-radius:var(--r);cursor:pointer;
+  transition:all .12s;border:1px solid transparent;
+  margin-bottom:1px;
+}
+.tmpl-item:hover{background:var(--bg3);border-color:var(--border)}
+.tmpl-item.active{
+  background:var(--tag-bg);border-color:var(--accent);
+  box-shadow:inset 0 0 0 1px rgba(88,166,255,.15);
+}
+.tmpl-icon{font-size:16px;flex-shrink:0;width:22px;text-align:center}
+.tmpl-label{font-size:12.5px;flex:1;line-height:1.3}
+.tmpl-item.active .tmpl-label{color:var(--accent);font-weight:500}
+
+/* ─── Center ─────────────────────────────────────────────────── */
+.center{
+  display:flex;flex-direction:column;overflow:hidden;
+  border-right:1px solid var(--border);
+}
+
+.tmpl-info{
+  background:var(--bg2);border-bottom:1px solid var(--border);
+  padding:16px 20px;display:flex;gap:14px;align-items:flex-start;
+  flex-shrink:0;
+}
+.tmpl-big-icon{font-size:36px;line-height:1;flex-shrink:0;margin-top:2px}
+.tmpl-info-text{flex:1;min-width:0}
+.tmpl-title{font-size:16px;font-weight:700;letter-spacing:-.3px;margin-bottom:3px}
+.tmpl-desc{font-size:12px;color:var(--text2);margin-bottom:8px}
+.tmpl-tags{display:flex;flex-wrap:wrap;gap:4px}
+.tag{
+  font-size:10px;background:var(--tag-bg);color:var(--tag-text);
+  padding:2px 8px;border-radius:20px;font-family:var(--mono);border:1px solid rgba(88,166,255,.2);
+}
+
+.vars-section{flex:1;overflow-y:auto;padding:16px 20px}
+.vars-section::-webkit-scrollbar{width:4px}
+.vars-section::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+
+.vars-header{
+  font-size:11px;font-weight:700;color:var(--text3);
+  letter-spacing:.8px;text-transform:uppercase;
+  margin-bottom:12px;display:flex;align-items:center;gap:8px;
+}
+.vars-header::after{content:'';flex:1;height:1px;background:var(--border)}
+
+.var-row{margin-bottom:12px}
+.var-label{
+  font-size:11.5px;font-weight:600;color:var(--yellow);
+  margin-bottom:5px;display:flex;align-items:center;gap:6px;
+}
+.var-label::before{
+  content:'';width:3px;height:3px;background:var(--yellow);border-radius:50%;
+}
+.var-input{
+  width:100%;background:var(--bg3);border:1px solid var(--border);
+  border-radius:var(--r);padding:8px 12px;
+  color:var(--text);font-family:var(--sans);font-size:13px;
+  outline:none;transition:border-color .15s, box-shadow .15s;
+}
+.var-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(88,166,255,.12)}
+.var-input::placeholder{color:var(--text3)}
+
+.no-vars{
+  text-align:center;padding:40px 20px;color:var(--text2);
+}
+.no-vars .emoji{font-size:32px;margin-bottom:8px}
+.no-vars p{font-size:13px}
+
+.gen-area{
+  padding:16px 20px;border-top:1px solid var(--border);
+  background:var(--bg2);flex-shrink:0;
+}
+.btn-generate{
+  width:100%;background:var(--accent);color:#fff;
+  border:none;border-radius:var(--r);padding:12px 20px;
+  font-family:var(--sans);font-size:14px;font-weight:700;
+  cursor:pointer;transition:all .15s;letter-spacing:-.2px;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.btn-generate:hover{background:var(--accent2);transform:translateY(-1px);box-shadow:0 4px 16px rgba(88,166,255,.3)}
+.btn-generate:active{transform:translateY(0);box-shadow:none}
+.btn-generate .sparkle{font-size:16px}
+.append-check{
+  display:flex;align-items:center;gap:6px;margin-top:8px;cursor:pointer;
+}
+.append-check input{accent-color:var(--accent)}
+.append-check span{font-size:12px;color:var(--text2)}
+
+/* ─── Right Panel ─────────────────────────────────────────────── */
+.right{display:flex;flex-direction:column;overflow:hidden}
+
+.out-header{
+  padding:12px 16px;background:var(--bg2);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:10px;flex-shrink:0;
+}
+.out-title{font-weight:600;font-size:13px;flex:1}
+.char-count{font-size:11px;color:var(--text3);font-family:var(--mono)}
+
+.output-wrap{flex:1;position:relative;overflow:hidden}
+.output{
+  width:100%;height:100%;background:var(--bg);
+  color:var(--text);font-family:var(--mono);font-size:12.5px;
+  line-height:1.7;border:none;outline:none;resize:none;padding:16px;
+  overflow-y:auto;
+}
+.output::-webkit-scrollbar{width:4px}
+.output::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+.output-placeholder{
+  position:absolute;top:0;left:0;right:0;bottom:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  pointer-events:none;gap:12px;padding:20px;
+}
+.output-placeholder .ph-icon{font-size:40px;opacity:.2}
+.output-placeholder .ph-text{
+  text-align:center;color:var(--text3);font-size:12px;line-height:1.8;
+}
+.output-placeholder .ph-steps{
+  display:flex;flex-direction:column;gap:4px;width:100%;max-width:240px;
+}
+.output-placeholder .step{
+  display:flex;align-items:center;gap:8px;
+  font-size:11px;color:var(--text3);font-family:var(--mono);
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--r);padding:6px 10px;
+}
+.step-num{
+  width:16px;height:16px;border-radius:50%;background:var(--border);
+  display:flex;align-items:center;justify-content:center;
+  font-size:9px;font-weight:700;flex-shrink:0;
+}
+
+.out-actions{
+  padding:10px 16px;background:var(--bg2);
+  border-top:1px solid var(--border);flex-shrink:0;
+}
+.out-actions-row{display:flex;gap:6px;margin-bottom:6px}
+.out-actions-row:last-child{margin-bottom:0}
+.btn{
+  background:var(--bg3);border:1px solid var(--border);
+  border-radius:var(--r);padding:7px 14px;
+  color:var(--text2);font-family:var(--sans);font-size:12px;font-weight:500;
+  cursor:pointer;transition:all .12s;white-space:nowrap;flex:1;
+  display:flex;align-items:center;justify-content:center;gap:5px;
+}
+.btn:hover{color:var(--text);border-color:var(--border2);background:var(--bg4)}
+.btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn.primary:hover{background:var(--accent2);border-color:var(--accent2)}
+.btn.success{background:rgba(63,185,80,.15);color:var(--green);border-color:rgba(63,185,80,.3)}
+.btn.success:hover{background:rgba(63,185,80,.25)}
+.btn.danger{background:rgba(247,129,102,.1);color:var(--orange);border-color:rgba(247,129,102,.25)}
+.btn.danger:hover{background:rgba(247,129,102,.2)}
+
+.transform-row{
+  display:flex;gap:4px;align-items:center;
+  padding-bottom:4px;border-bottom:1px solid var(--border);
+  margin-bottom:6px;
+}
+.transform-label{font-size:10px;color:var(--text3);margin-right:4px}
+.btn-sm{
+  background:none;border:1px solid var(--border);
+  border-radius:4px;padding:3px 8px;
+  color:var(--text3);font-family:var(--mono);font-size:10px;
+  cursor:pointer;transition:all .1s;
+}
+.btn-sm:hover{color:var(--text);border-color:var(--border2);background:var(--bg3)}
+
+/* ─── Toast ──────────────────────────────────────────────────── */
+#toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(10px);
+  background:var(--bg4);color:var(--text);border:1px solid var(--border2);
+  border-radius:var(--r2);padding:10px 20px;font-size:13px;font-weight:500;
+  pointer-events:none;opacity:0;z-index:999;
+  transition:all .2s;white-space:nowrap;
+  box-shadow:var(--shadow);
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ─── Empty state ─────────────────────────────────────────────── */
+.empty-search{
+  text-align:center;padding:40px 20px;color:var(--text3);font-size:12px;
+}
+
+/* ─── Scrollbar global ────────────────────────────────────────── */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:6px}
+::-webkit-scrollbar-thumb:hover{background:var(--border2)}
+
+/* ─── Responsive ─────────────────────────────────────────────── */
+@media(max-width:900px){
+  .main{grid-template-columns:240px 1fr}
+  .right{display:none}
+  body{overflow:auto}
+  html,body{height:auto}
+  .app{height:auto;overflow:visible}
+  .main{height:calc(100vh - 52px)}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ── Topbar ──────────────────────────────────────────────────── -->
+<header class="topbar">
+  <div class="topbar-logo">
+    <span class="icon">⚡</span>
+    <span class="name">AI Prompt Generator</span>
+    <span class="ver">v3.0</span>
+  </div>
+  <div class="topbar-actions">
+    <span class="topbar-badge" id="tmplCountBadge">43 templates</span>
+    <a class="topbar-link" href="https://github.com" target="_blank">⭐ GitHub</a>
+  </div>
+</header>
+
+<!-- ── Main ───────────────────────────────────────────────────── -->
+<div class="main">
+
+  <!-- ── Sidebar ─────────────────────────────────────────────── -->
+  <aside class="sidebar">
+    <div class="sidebar-search">
+      <div class="search-box">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" id="searchInput" placeholder="ค้นหา template..." autocomplete="off">
+      </div>
+    </div>
+    <div class="cat-count">
+      <span id="visibleCount">กำลังโหลด...</span>
+      <span>Templates</span>
+    </div>
+    <div class="tree" id="tree"></div>
+  </aside>
+
+  <!-- ── Center ──────────────────────────────────────────────── -->
+  <div class="center">
+    <div class="tmpl-info" id="tmplInfo">
+      <div class="tmpl-big-icon" id="tmplIcon">📝</div>
+      <div class="tmpl-info-text">
+        <div class="tmpl-title" id="tmplTitle">เลือก Template จากเมนูด้านซ้าย</div>
+        <div class="tmpl-desc" id="tmplDesc">คลิก Category เพื่อขยาย แล้วเลือก Template ที่ต้องการ</div>
+        <div class="tmpl-tags" id="tmplTags"></div>
+      </div>
+    </div>
+
+    <div class="vars-section" id="varsSection">
+      <div class="no-vars" id="noVarsMsg">
+        <div class="emoji">👈</div>
+        <p>เลือก Template จากเมนูด้านซ้ายก่อน</p>
+      </div>
+    </div>
+
+    <div class="gen-area">
+      <button class="btn-generate" id="btnGenerate">
+        <span class="sparkle">✨</span>
+        Generate Prompt
+      </button>
+      <label class="append-check">
+        <input type="checkbox" id="appendMode">
+        <span>Append mode — ต่อท้าย Prompt เดิม</span>
+      </label>
+    </div>
+  </div>
+
+  <!-- ── Right ───────────────────────────────────────────────── -->
+  <div class="right">
+    <div class="out-header">
+      <span class="out-title">📝 Generated Prompt</span>
+      <span class="char-count" id="charCount">0 ตัวอักษร</span>
+    </div>
+
+    <div class="output-wrap">
+      <textarea class="output" id="output" spellcheck="false" placeholder=""></textarea>
+      <div class="output-placeholder" id="outputPlaceholder">
+        <div class="ph-icon">⚡</div>
+        <div class="ph-steps">
+          <div class="step"><span class="step-num">1</span>เลือก Template</div>
+          <div class="step"><span class="step-num">2</span>กรอกตัวแปร</div>
+          <div class="step"><span class="step-num">3</span>กด Generate</div>
+          <div class="step"><span class="step-num">4</span>Copy ไปใช้ AI</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="out-actions">
+      <div class="transform-row">
+        <span class="transform-label">Transform:</span>
+        <button class="btn-sm" onclick="transformText('upper')">UPPER</button>
+        <button class="btn-sm" onclick="transformText('lower')">lower</button>
+        <button class="btn-sm" onclick="transformText('title')">Title</button>
+        <button class="btn-sm" onclick="clearOutput()" style="margin-left:auto;color:var(--orange)">Clear ✕</button>
+      </div>
+      <div class="out-actions-row">
+        <button class="btn primary" onclick="copyOutput()">📋 Copy</button>
+        <button class="btn success" onclick="exportTxt()">💾 Export .txt</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+</div><!-- /app -->
+
+<div id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+//  TEMPLATES DATA
+// ═══════════════════════════════════════════════════════════════
+const TEMPLATES = {
+  "✍️ เขียนเนื้อหา": [
+    {
+      name:"บทความ Blog / SEO", icon:"📰",
+      desc:"บทความบล็อกที่ติด Google พร้อม SEO",
+      tags:["blog","seo","content"],
+      vars:["หัวข้อ","คีย์เวิร์ดหลัก","กลุ่มเป้าหมาย","จำนวนคำ"],
+      prompt:`เขียนบทความบล็อกเรื่อง "{หัวข้อ}" ที่ติด Google ได้
+
+🎯 เป้าหมาย: กลุ่มผู้อ่าน {กลุ่มเป้าหมาย}
+🔑 คีย์เวิร์ดหลัก: {คีย์เวิร์ดหลัก} (ใส่อย่างเป็นธรรมชาติ)
+📏 ความยาว: ประมาณ {จำนวนคำ} คำ
+
+โครงสร้าง:
+1. ชื่อเรื่อง (H1) ที่มีคีย์เวิร์ดและดึงดูดคลิก
+2. Meta Description 150–160 ตัวอักษร
+3. บทนำ — เปิดด้วยคำถาม/สถิติ/ปัญหาที่ผู้อ่านเจอ
+4. เนื้อหาหลัก แบ่ง H2/H3 ชัดเจน
+5. ตัวอย่างหรือ Case Study
+6. สรุปและ CTA
+
+สไตล์: เป็นกันเอง อ่านง่าย มีคุณค่า ไม่ขายของจ๋า`
+    },
+    {
+      name:"โพสต์ Social Media", icon:"📱",
+      desc:"โพสต์โซเชียลที่คนหยุดอ่าน — 3 เวอร์ชัน",
+      tags:["social","facebook","instagram","tiktok"],
+      vars:["แพลตฟอร์ม","หัวข้อ/สินค้า","โทน","CTA ที่ต้องการ"],
+      prompt:`เขียนโพสต์ {แพลตฟอร์ม} เรื่อง "{หัวข้อ/สินค้า}"
+
+โทน: {โทน}
+CTA: {CTA ที่ต้องการ}
+
+สร้าง 3 เวอร์ชัน:
+
+เวอร์ชัน 1 — Hook แบบ "คำถาม"
+(เริ่มด้วยคำถามที่คนอยากรู้คำตอบ)
+
+เวอร์ชัน 2 — Hook แบบ "สถิติ/ตัวเลข"
+(เปิดด้วยตัวเลขที่น่าตกใจ)
+
+เวอร์ชัน 3 — Hook แบบ "เรื่องราว"
+(เล่าเรื่องสั้นที่คนรู้สึก relate)
+
+ทุกเวอร์ชันต้องมี: Emoji ที่เหมาะสม + Hashtag 8–10 ตัว + CTA ชัดเจน`
+    },
+    {
+      name:"Script YouTube / Podcast", icon:"🎬",
+      desc:"สคริปต์วิดีโอที่คนดูจนจบ",
+      tags:["youtube","podcast","script","video"],
+      vars:["หัวข้อ","ความยาว (นาที)","กลุ่มผู้ชม","สไตล์"],
+      prompt:`เขียน Script {สไตล์} เรื่อง "{หัวข้อ}"
+ความยาว: {ความยาว (นาที)} นาที | ผู้ชม: {กลุ่มผู้ชม}
+
+🎬 HOOK (0:00–0:30) — ดึงดูดใน 30 วินาทีแรก
+"เปิดด้วยอะไรที่ทำให้คนหยุดเลื่อน..."
+
+🗺️ INTRO (0:30–1:00) — บอกว่าคนดูจะได้อะไร
+
+📖 BODY — แบ่งเป็น Chapter ชัดเจน
+  Chapter 1: [หัวข้อย่อย 1]
+  Chapter 2: [หัวข้อย่อย 2]
+  Chapter 3: [หัวข้อย่อย 3]
+
+💬 B-ROLL SUGGESTIONS — ไอเดียภาพประกอบ
+
+🎯 OUTRO — สรุป + CTA (Subscribe/Follow/Link)
+
+📌 Timestamps พร้อมใส่ Description`
+    },
+    {
+      name:"Newsletter ประจำเดือน", icon:"📧",
+      desc:"Newsletter ที่คนรอเปิดอ่าน",
+      tags:["email","newsletter","marketing"],
+      vars:["ชื่อ Newsletter","หัวข้อหลัก","ข่าว/อัพเดทสำคัญ","Segment ผู้อ่าน"],
+      prompt:`เขียน Newsletter "{ชื่อ Newsletter}" ฉบับนี้
+
+📌 หัวข้อหลัก: {หัวข้อหลัก}
+📢 อัพเดทสำคัญ: {ข่าว/อัพเดทสำคัญ}
+👥 กลุ่มผู้รับ: {Segment ผู้อ่าน}
+
+โครงสร้าง:
+📬 Subject Line (สร้าง 3 ตัวเลือก พร้อม Preview Text)
+👋 Opening — ทักทายแบบเป็นกันเอง
+🔥 Hero Story — เรื่องสำคัญที่สุดของฉบับนี้
+📎 Quick Reads — 3 ลิงก์น่าอ่านพร้อมสรุป 1 บรรทัด
+💡 Tip of the Month — เคล็ดลับที่นำไปใช้ได้เลย
+📅 Upcoming — สิ่งที่กำลังจะมา
+👋 Closing — อำลาแบบมีบุคลิก`
+    },
+    {
+      name:"Press Release", icon:"📣",
+      desc:"ข่าวแถลงที่สื่อนำไปลง",
+      tags:["pr","press","news"],
+      vars:["ชื่อบริษัท/องค์กร","เหตุการณ์/ข่าว","วันที่","Quote ผู้บริหาร"],
+      prompt:`เขียน Press Release สำหรับ {ชื่อบริษัท/องค์กร}
+
+เหตุการณ์: {เหตุการณ์/ข่าว}
+วันที่: {วันที่}
+
+FORMAT มาตรฐาน:
+FOR IMMEDIATE RELEASE
+
+[HEADLINE — ชื่อข่าวที่น่าสนใจ]
+[SUBHEADLINE — ขยายความใน 1 ประโยค]
+
+[เมือง, วันที่] — Lead Paragraph (ตอบ Who What When Where Why)
+
+Body Paragraph 1 — รายละเอียดสำคัญ
+Body Paragraph 2 — Context และความสำคัญ
+
+Quote: "{Quote ผู้บริหาร}" — [ชื่อ ตำแหน่ง]
+
+Body Paragraph 3 — ข้อมูลเพิ่มเติม / ผลกระทบ
+
+About [บริษัท] — Boilerplate 50 คำ
+Contact: ###`
+    },
+    {
+      name:"Copywriting / Product Description", icon:"🛍️",
+      desc:"คำอธิบายสินค้าที่ขายได้",
+      tags:["copywriting","product","ecommerce"],
+      vars:["ชื่อสินค้า","จุดเด่น 3 อย่าง","Pain Point ลูกค้า","ราคา/Tier"],
+      prompt:`เขียน Product Copy สำหรับ "{ชื่อสินค้า}"
+
+😣 Pain Point: {Pain Point ลูกค้า}
+✨ จุดเด่น: {จุดเด่น 3 อย่าง}
+💰 ราคา/Package: {ราคา/Tier}
+
+สร้าง 3 ส่วน:
+
+1️⃣ HEADLINE + SUBHEADLINE
+(ดึงดูด แก้ Pain Point ชัดเจน)
+
+2️⃣ SHORT COPY (50–80 คำ สำหรับ Listing)
+เน้น Benefit ไม่ใช่ Feature
+
+3️⃣ LONG COPY (สำหรับ Landing Page)
+- Opening Hook
+- Problem Agitation
+- Solution Introduction
+- Feature → Benefit bullets
+- Social Proof placeholder
+- Guarantee / Risk Reversal
+- CTA ที่ชัดเจน`
+    },
+  ],
+
+  "💻 เขียนโค้ด": [
+    {
+      name:"เขียน Function / Module", icon:"⚙️",
+      desc:"โค้ดพร้อม Doc, Types และ Tests",
+      tags:["code","function","programming"],
+      vars:["ภาษา","ชื่อฟังก์ชัน","หน้าที่","Input type","Output type"],
+      prompt:`เขียน {ภาษา} function: \`{ชื่อฟังก์ชัน}\`
+
+หน้าที่: {หน้าที่}
+Input: {Input type}
+Output: {Output type}
+
+ต้องการ:
+1. Docstring / JSDoc ครบถ้วน
+2. Type hints / TypeScript types
+3. Input validation + meaningful errors
+4. Edge case handling
+5. ตัวอย่างการใช้งาน 3 แบบ
+6. Unit tests (pytest / Jest / ภาษาที่เหมาะสม)
+7. Time/Space complexity O() notation
+
+Style: Clean, readable, follow best practices ของ {ภาษา}`
+    },
+    {
+      name:"Debug + แก้ Bug", icon:"🐛",
+      desc:"หา Bug พร้อมอธิบายและแก้ไข",
+      tags:["debug","fix","bug"],
+      vars:["ภาษา","Error message","สิ่งที่โค้ดควรทำ"],
+      prompt:`ช่วย Debug โค้ด {ภาษา} นี้
+
+Error: {Error message}
+โค้ดควรทำ: {สิ่งที่โค้ดควรทำ}
+
+\`\`\`
+[วางโค้ดที่นี่]
+\`\`\`
+
+กรุณา:
+1. 🔍 อธิบายสาเหตุของ Bug (อธิบายแบบเข้าใจง่าย)
+2. ✅ โค้ดที่แก้ไขแล้ว พร้อม Comment บอกส่วนที่เปลี่ยน
+3. 💡 อธิบายว่าแก้ยังไงและทำไม
+4. 🛡️ วิธีป้องกัน Bug แบบนี้ในอนาคต
+5. 🧪 Test case ที่ควรเพิ่ม`
+    },
+    {
+      name:"Code Review & Refactor", icon:"🔍",
+      desc:"รีวิวโค้ดและแนะนำการปรับปรุง",
+      tags:["review","refactor","quality"],
+      vars:["ภาษา","จุดประสงค์โค้ด","สิ่งที่กังวล"],
+      prompt:`Review โค้ด {ภาษา} สำหรับ {จุดประสงค์โค้ด}
+สิ่งที่กังวลเป็นพิเศษ: {สิ่งที่กังวล}
+
+\`\`\`
+[วางโค้ดที่นี่]
+\`\`\`
+
+ตรวจสอบและให้คะแนน (1–10) ในแต่ละด้าน:
+
+🏗️ Architecture & Design
+⚡ Performance & Efficiency
+🔒 Security Vulnerabilities
+📖 Readability & Maintainability
+🧪 Testability
+
+สำหรับแต่ละจุดที่มีปัญหา:
+- บอกว่าปัญหาคืออะไร
+- แสดง Before/After Code
+- อธิบายว่าทำไมถึงดีกว่า
+
+สรุป: Top 3 Priority ที่ควรแก้ก่อน`
+    },
+    {
+      name:"ออกแบบ Database Schema", icon:"🗄️",
+      desc:"ออกแบบ Schema พร้อม Relations และ Indexes",
+      tags:["database","sql","schema"],
+      vars:["ประเภท DB","ระบบที่สร้าง","Entities หลัก","ขนาดข้อมูลที่คาดไว้"],
+      prompt:`ออกแบบ Database Schema สำหรับระบบ "{ระบบที่สร้าง}"
+DB: {ประเภท DB} | ข้อมูลที่คาดไว้: {ขนาดข้อมูลที่คาดไว้}
+Entities หลัก: {Entities หลัก}
+
+ต้องการ:
+1. 📊 ER Diagram (ในรูป Text/ASCII)
+2. 📋 DDL SQL Script พร้อม:
+   - ชนิดข้อมูลที่เหมาะสม
+   - Primary/Foreign Keys
+   - Indexes ที่จำเป็น
+   - Constraints (NOT NULL, UNIQUE, CHECK)
+3. 🔗 อธิบาย Relationships และ Cardinality
+4. ⚡ Query ตัวอย่างที่ใช้บ่อย
+5. 📈 Scaling considerations`
+    },
+    {
+      name:"สร้าง REST API", icon:"🌐",
+      desc:"ออกแบบ API พร้อม Docs",
+      tags:["api","rest","backend"],
+      vars:["Framework","ระบบ","Endpoints หลัก","Auth method"],
+      prompt:`ออกแบบ REST API สำหรับ "{ระบบ}"
+Framework: {Framework} | Auth: {Auth method}
+Endpoints: {Endpoints หลัก}
+
+ต้องการ:
+1. 📁 Project structure แนะนำ
+2. 🛣️ Routes ทั้งหมดในรูป table:
+   | Method | Endpoint | Description | Auth Required |
+3. 📝 Request/Response format (JSON) พร้อมตัวอย่าง
+4. ❌ Error handling standard
+5. 🔐 Auth implementation
+6. ✅ Input validation approach
+7. 📖 OpenAPI/Swagger snippet 2–3 endpoints
+8. 🧪 curl commands ตัวอย่าง`
+    },
+    {
+      name:"UI Component (React/Vue)", icon:"🎨",
+      desc:"Component สำหรับ Frontend Framework",
+      tags:["frontend","component","react","vue"],
+      vars:["Framework","ชื่อ Component","หน้าที่","Props ที่ต้องการ"],
+      prompt:`เขียน {Framework} component: \`{ชื่อ Component}\`
+
+หน้าที่: {หน้าที่}
+Props: {Props ที่ต้องการ}
+
+ต้องการ:
+1. 💻 Component code ที่ production-ready
+2. 📋 TypeScript interface สำหรับทุก prop
+3. 🎨 Styling (Tailwind / CSS Modules)
+4. ♿ Accessibility (ARIA, keyboard nav)
+5. 📱 Responsive behavior
+6. 🔄 Loading / Error / Empty states
+7. 🧪 Unit test พื้นฐาน
+8. 📖 ตัวอย่างการใช้งาน`
+    },
+    {
+      name:"Prompt Engineering สำหรับ AI", icon:"🤖",
+      desc:"เขียน Prompt ที่ดีสำหรับ GPT/Claude/Gemini",
+      tags:["ai","llm","prompt engineering"],
+      vars:["AI Model","งานที่ต้องการ","Output format","ข้อจำกัด"],
+      prompt:`ออกแบบ Prompt สำหรับ {AI Model} ที่ทำงาน: {งานที่ต้องการ}
+Output format: {Output format}
+ข้อจำกัด: {ข้อจำกัด}
+
+สร้าง:
+1. 🏗️ SYSTEM PROMPT
+   (บทบาท, ข้อจำกัด, สไตล์การตอบ)
+
+2. 📝 USER PROMPT TEMPLATE
+   (พร้อม placeholders สำหรับ input)
+
+3. 💬 FEW-SHOT EXAMPLES (2–3 ตัวอย่าง)
+
+4. ⚡ CHAIN-OF-THOUGHT instruction
+
+5. ✅ Test cases: 3 กรณีที่ควรทดสอบ
+
+6. ⚠️ Edge cases ที่ควรระวัง`
+    },
+  ],
+
+  "🎨 AI Image & Design": [
+    {
+      name:"Midjourney — Concept Art", icon:"🖼️",
+      desc:"Prompt ภาพ Concept Art คุณภาพสูง",
+      tags:["midjourney","concept art","image"],
+      vars:["หัวเรื่อง","สไตล์ศิลปะ","บรรยากาศ","จานสี","แสง"],
+      prompt:`{หัวเรื่อง}, {สไตล์ศิลปะ}, {บรรยากาศ} atmosphere, {จานสี} color palette, {แสง} lighting, intricate details, ultra-detailed, masterpiece quality, 8k resolution, professional concept art, cinematic composition, trending on ArtStation --ar 16:9 --q 2 --s 750`
+    },
+    {
+      name:"Midjourney — Portrait / Character", icon:"👤",
+      desc:"Prompt สำหรับภาพตัวละครและบุคคล",
+      tags:["midjourney","portrait","character"],
+      vars:["คำอธิบายตัวละคร","สไตล์","Background","อารมณ์","เสื้อผ้า/ลุค"],
+      prompt:`{คำอธิบายตัวละคร}, {เสื้อผ้า/ลุค}, {อารมณ์} expression, {สไตล์} art style, {Background} background, dramatic lighting, detailed facial features, sharp focus, bokeh background, high resolution --ar 2:3 --q 2 --s 500`
+    },
+    {
+      name:"DALL-E / Adobe Firefly", icon:"✨",
+      desc:"Prompt สำหรับ DALL-E และ Firefly",
+      tags:["dalle","firefly","image"],
+      vars:["สิ่งที่ต้องการ","สไตล์ศิลปะ","บรรยากาศ","สี","มุมกล้อง"],
+      prompt:`Create a {สไตล์ศิลปะ} image of {สิ่งที่ต้องการ}.
+
+Visual style: {บรรยากาศ} mood, {สี} color scheme
+Camera angle: {มุมกล้อง}
+
+Technical specs:
+- Ultra-detailed, professional quality
+- Clean composition with strong focal point
+- Photorealistic lighting and shadows
+- No text, watermarks, or artifacts
+
+The image should feel: authentic, visually striking, and memorable.`
+    },
+    {
+      name:"Stable Diffusion — Cinematic", icon:"🎞️",
+      desc:"Prompt ภาพสไตล์ภาพยนตร์",
+      tags:["stable diffusion","cinematic","film"],
+      vars:["Scene description","Director/Film style","Color grade","แสง"],
+      prompt:`{Scene description}, {Director/Film style} cinematography, {Color grade} color grading, {แสง} lighting, 35mm film, anamorphic lens, depth of field, film grain, cinematic atmosphere, ultra-detailed, 4k
+
+Negative prompt: cartoon, anime, illustration, blurry, oversaturated, low quality, deformed, ugly`
+    },
+    {
+      name:"UI/UX Design Brief", icon:"📐",
+      desc:"Design Brief สำหรับออกแบบ App/Web",
+      tags:["ui","ux","design","brief"],
+      vars:["ประเภท Product","Target Users","Core Features","Tone & Personality"],
+      prompt:`สร้าง UI/UX Design Brief สำหรับ {ประเภท Product}
+
+👥 Target Users: {Target Users}
+⚡ Core Features: {Core Features}
+🎭 Tone & Personality: {Tone & Personality}
+
+ต้องการ Design System เริ่มต้น:
+🎨 Color Palette (Primary, Secondary, Neutral, Semantic)
+🔤 Typography Scale
+📐 Spacing System
+🧩 Core Components List
+📱 Screen Inventory
+🗺️ User Flow หลัก
+✅ Design Principles (3–5 ข้อ)
+⚠️ Don'ts`
+    },
+    {
+      name:"Logo Design Brief", icon:"🔵",
+      desc:"Brief สำหรับออกแบบโลโก้",
+      tags:["logo","branding","design"],
+      vars:["ชื่อแบรนด์","ธุรกิจ","ค่านิยมหลัก","คู่แข่ง"],
+      prompt:`สร้าง Logo Design Brief สำหรับ "{ชื่อแบรนด์}"
+
+🏢 ธุรกิจ: {ธุรกิจ}
+💫 ค่านิยม: {ค่านิยมหลัก}
+🥊 คู่แข่ง: {คู่แข่ง}
+
+ต้องการ:
+1. Brand Personality (3 คำคุณศัพท์)
+2. Logo Style Direction (Wordmark/Pictorial/Abstract/Combination)
+3. Color Psychology — แนะนำ palette พร้อมเหตุผล
+4. Typography Direction
+5. Concept Ideas (3 concept พร้อม rationale)
+6. Do's and Don'ts
+7. Midjourney Prompt ลองสร้าง mockup`
+    },
+  ],
+
+  "📊 วิเคราะห์ & กลยุทธ์": [
+    {
+      name:"SWOT Analysis", icon:"📋",
+      desc:"วิเคราะห์ SWOT แบบลึก + TOWS Matrix",
+      tags:["swot","strategy","analysis"],
+      vars:["บริษัท/โปรเจค","อุตสาหกรรม","ตลาดเป้าหมาย"],
+      prompt:`ทำ SWOT Analysis สำหรับ {บริษัท/โปรเจค}
+อุตสาหกรรม: {อุตสาหกรรม} | ตลาด: {ตลาดเป้าหมาย}
+
+💪 STRENGTHS — Core competencies ที่แท้จริง
+😰 WEAKNESSES — ช่องว่างที่ควรปรับปรุงเร่งด่วน
+🌟 OPPORTUNITIES — เทรนด์ตลาดที่น่าใช้ประโยชน์
+⚠️ THREATS — คู่แข่งและ Disruptors
+
+🎯 TOWS Matrix:
+SO Strategy (ใช้จุดแข็งคว้าโอกาส)
+WO Strategy (แก้จุดอ่อนเพื่อใช้โอกาส)
+ST Strategy (ใช้จุดแข็งรับมือภัยคุกคาม)
+WT Strategy (ลดจุดอ่อนและภัยคุกคาม)
+
+📋 Top 5 Action Items ที่ควรทำภายใน 90 วัน`
+    },
+    {
+      name:"OKR Planning", icon:"🎯",
+      desc:"ตั้ง OKR ให้ชัดเจนและวัดได้",
+      tags:["okr","goals","planning"],
+      vars:["ทีม/แผนก","ช่วงเวลา (Quarter)","เป้าหมายธุรกิจหลัก","ทรัพยากรที่มี"],
+      prompt:`ออกแบบ OKR สำหรับ {ทีม/แผนก}
+ช่วงเวลา: {ช่วงเวลา (Quarter)} | เป้าหมายธุรกิจ: {เป้าหมายธุรกิจหลัก}
+ทรัพยากร: {ทรัพยากรที่มี}
+
+🏆 OBJECTIVE 1 (Inspirational, qualitative)
+  KR 1.1: [Metric] จาก [Baseline] ไป [Target] ภายใน [Date]
+  KR 1.2: ...
+  KR 1.3: ...
+
+🏆 OBJECTIVE 2
+  KR 2.1: ...
+
+🏆 OBJECTIVE 3
+  KR 3.1: ...
+
+สำหรับแต่ละ KR:
+- วิธีวัด (Data source)
+- Checkpoint รายเดือน
+- Owner ที่รับผิดชอบ
+- Initiatives ที่จะทำให้บรรลุ
+
+⚠️ Risks และ Dependencies`
+    },
+    {
+      name:"Competitive Analysis", icon:"🥊",
+      desc:"วิเคราะห์คู่แข่งอย่างละเอียด",
+      tags:["competitive","market","analysis"],
+      vars:["สินค้า/บริการของเรา","คู่แข่งหลัก (3–5 ราย)","มิติที่วิเคราะห์"],
+      prompt:`ทำ Competitive Analysis สำหรับ {สินค้า/บริการของเรา}
+คู่แข่ง: {คู่แข่งหลัก (3–5 ราย)}
+มิติ: {มิติที่วิเคราะห์}
+
+📊 Comparison Matrix
+| มิติ | เรา | คู่แข่ง A | คู่แข่ง B | คู่แข่ง C |
+(ให้คะแนน 1–5 พร้อมอธิบาย)
+
+🗺️ Positioning Map (วาดด้วย text)
+
+💎 Unique Value Proposition ของแต่ละราย
+
+🎯 Gaps & Opportunities
+(สิ่งที่คู่แข่งทำพลาดและเราทำได้)
+
+🔮 Predicted Moves (คู่แข่งน่าจะทำอะไรต่อไป)
+
+🚀 Strategic Recommendations สำหรับเรา`
+    },
+    {
+      name:"Customer Persona", icon:"👥",
+      desc:"สร้าง Persona ที่ใช้งานได้จริง",
+      tags:["persona","customer","marketing"],
+      vars:["สินค้า/บริการ","ข้อมูลที่มี","ตลาด"],
+      prompt:`สร้าง Customer Persona สำหรับ {สินค้า/บริการ}
+ตลาด: {ตลาด} | ข้อมูลพื้นฐาน: {ข้อมูลที่มี}
+
+PRIMARY PERSONA:
+
+👤 IDENTITY
+ชื่อ/อายุ/อาชีพ/รายได้/สถานที่
+
+🧠 PSYCHOLOGY
+- Values ที่ให้ความสำคัญ
+- Motivations ที่ขับเคลื่อน
+- Fears & Frustrations
+
+📱 BEHAVIOR
+- วันทั่วไปของเขา/เธอ
+- Platform ที่ใช้
+- กระบวนการตัดสินใจซื้อ
+
+😣 PAIN POINTS ที่สินค้าเราแก้ได้
+🎁 GAINS ที่เขา/เธอต้องการ
+💬 QUOTE ที่เขา/เธออาจพูด
+🎯 HOW TO REACH: Channel + Message
+
+SECONDARY PERSONA (สั้นกว่า)`
+    },
+    {
+      name:"Business Plan 1 หน้า", icon:"📑",
+      desc:"สรุป Business Plan แบบกระชับ",
+      tags:["business plan","startup","strategy"],
+      vars:["ชื่อธุรกิจ","ปัญหาที่แก้","กลุ่มลูกค้า","รายได้หลัก","ทุนเริ่มต้น"],
+      prompt:`สร้าง One-Page Business Plan สำหรับ "{ชื่อธุรกิจ}"
+
+🎯 Problem: {ปัญหาที่แก้}
+👥 Customer: {กลุ่มลูกค้า}
+💰 Revenue Model: {รายได้หลัก}
+💵 Capital: {ทุนเริ่มต้น}
+
+ครอบคลุม:
+1. Problem & Solution (ชัดเจน ไม่เกิน 3 ประโยค)
+2. Unique Value Proposition
+3. Target Market (TAM, SAM, SOM)
+4. Business Model Canvas สั้น
+5. Go-to-Market Strategy
+6. Financial Projections 12 เดือน
+7. Milestones (3, 6, 12 เดือน)
+8. Team & Key Hires
+9. Funding Ask & Use of Funds`
+    },
+  ],
+
+  "🎓 การศึกษา": [
+    {
+      name:"อธิบายแนวคิดซับซ้อน", icon:"💡",
+      desc:"อธิบายยากให้กลายเป็นง่าย",
+      tags:["explain","education","concept"],
+      vars:["แนวคิด/หัวข้อ","ระดับผู้เรียน","Context/Background"],
+      prompt:`อธิบาย "{แนวคิด/หัวข้อ}" ให้ {ระดับผู้เรียน} เข้าใจ
+Context: {Context/Background}
+
+🌍 BIG PICTURE — ทำไมสิ่งนี้สำคัญ?
+
+📖 CORE CONCEPT — แกนหลักคืออะไร?
+(อธิบายด้วยภาษาง่ายๆ ก่อน)
+
+🔗 ANALOGY — "มันเหมือนกับ..."
+
+🔬 DEEP DIVE — รายละเอียดที่ควรรู้
+(แบ่งเป็นส่วนย่อยๆ)
+
+🌐 REAL-WORLD EXAMPLES (3 ตัวอย่าง)
+
+🤔 COMMON MISCONCEPTIONS
+
+📚 NEXT STEPS — ศึกษาอะไรต่อ
+
+❓ SELF-CHECK QUESTIONS (5 ข้อ)`
+    },
+    {
+      name:"สร้างแบบทดสอบ", icon:"📝",
+      desc:"ข้อสอบครบรูปแบบพร้อมเฉลย",
+      tags:["quiz","test","education"],
+      vars:["วิชา","หัวข้อ","ระดับความยาก","จำนวนข้อ"],
+      prompt:`สร้างแบบทดสอบ {วิชา} หัวข้อ "{หัวข้อ}"
+ระดับ: {ระดับความยาก} | จำนวน: {จำนวนข้อ} ข้อ
+
+แบ่งสัดส่วน:
+- Multiple Choice 40% (4 ตัวเลือก มีตัวลวงที่ดี)
+- True/False พร้อมอธิบายเหตุผล 20%
+- Fill in the blank 20%
+- Short Answer 20%
+
+สำหรับทุกข้อ:
+✅ เฉลยที่ถูกต้อง
+💡 คำอธิบายว่าทำไมถึงถูก/ผิด
+🔗 Concept ที่เกี่ยวข้อง
+
+สุดท้าย: Rubric คะแนน + เกณฑ์ผ่าน`
+    },
+    {
+      name:"Lesson Plan / แผนการสอน", icon:"📅",
+      desc:"แผนการสอนที่สมบูรณ์",
+      tags:["lesson plan","teaching","education"],
+      vars:["วิชา","หัวข้อ","ระยะเวลา","ระดับนักเรียน"],
+      prompt:`สร้าง Lesson Plan: {วิชา} — "{หัวข้อ}"
+เวลา: {ระยะเวลา} | ระดับ: {ระดับนักเรียน}
+
+📋 OVERVIEW
+- Learning Objectives (SMART)
+- Prerequisites
+- Materials / Technology ที่ต้องการ
+
+⏱️ LESSON BREAKDOWN
+| ช่วง | เวลา | กิจกรรม | วิธีสอน | Materials |
+
+🎯 ENGAGEMENT ACTIVITIES
+- Opening Hook (5 นาทีแรก)
+- Interactive Elements
+- Think-Pair-Share
+
+🧠 DIFFERENTIATION
+- สำหรับนักเรียนที่เรียนช้า
+- Extension สำหรับนักเรียนที่เรียนเร็ว
+
+📊 ASSESSMENT (Formative + Summative)
+🏠 HOMEWORK ที่มีความหมาย`
+    },
+    {
+      name:"Research Paper Outline", icon:"🔬",
+      desc:"โครงสร้างงานวิจัยและวิทยานิพนธ์",
+      tags:["research","academic","thesis"],
+      vars:["หัวข้อวิจัย","สาขาวิชา","ระดับ","วิธีวิจัย"],
+      prompt:`สร้าง Research Paper Outline: "{หัวข้อวิจัย}"
+สาขา: {สาขาวิชา} | ระดับ: {ระดับ} | Method: {วิธีวิจัย}
+
+1. TITLE & ABSTRACT
+   - Title (3 ตัวเลือก)
+   - Abstract template
+   - Keywords 5 คำ
+
+2. INTRODUCTION
+   - Background & Context
+   - Research Gap
+   - Research Questions / Hypotheses
+   - Objectives, Scope & Limitations
+
+3. LITERATURE REVIEW — Themes ที่ควรครอบคลุม
+
+4. METHODOLOGY
+   - Research Design
+   - Population & Sampling
+   - Data Collection & Analysis
+
+5. RESULTS & DISCUSSION Framework
+
+6. CONCLUSION Template
+
+📚 Citation Style + Timeline แนะนำ`
+    },
+  ],
+
+  "💼 HR & การทำงาน": [
+    {
+      name:"Job Description", icon:"📋",
+      desc:"JD ที่ดึงดูดคนเก่งสมัคร",
+      tags:["hr","recruitment","job"],
+      vars:["ตำแหน่ง","แผนก","ระดับ (Junior/Mid/Senior)","ทักษะหลัก"],
+      prompt:`เขียน Job Description: {ตำแหน่ง} ({ระดับ (Junior/Mid/Senior)})
+แผนก: {แผนก} | ทักษะหลัก: {ทักษะหลัก}
+
+📌 ABOUT THE ROLE
+(Impact ของตำแหน่งนี้ ไม่ใช่แค่หน้าที่)
+
+🎯 WHAT YOU'LL DO
+- โปรเจคที่จะได้ทำ
+- ปัญหาที่จะได้แก้
+- คนที่จะได้ทำงานด้วย
+
+✅ WHAT WE'RE LOOKING FOR
+Must-have (3–5 ข้อ):
+Nice-to-have (3–5 ข้อ):
+You'll thrive here if:
+
+🎁 WHAT WE OFFER
+- Compensation range
+- Benefits ที่โดดเด่น
+- Growth opportunities
+
+🏢 ABOUT US (50 คำ — authentic)
+📬 HOW TO APPLY + Timeline`
+    },
+    {
+      name:"Performance Review", icon:"📈",
+      desc:"รายงานประเมินผลแบบ Constructive",
+      tags:["performance","review","feedback"],
+      vars:["ชื่อพนักงาน","ตำแหน่ง","ช่วงเวลา","ผลงานสำคัญ"],
+      prompt:`เขียน Performance Review สำหรับ {ชื่อพนักงาน} ({ตำแหน่ง})
+ช่วงเวลา: {ช่วงเวลา}
+
+💪 KEY ACCOMPLISHMENTS
+{ผลงานสำคัญ}
+→ วิเคราะห์ Impact เชิงปริมาณ
+
+⭐ STRENGTHS DEMONSTRATED
+(3–4 จุดแข็งพร้อมตัวอย่าง Behavior-based)
+
+📈 AREAS FOR DEVELOPMENT
+→ เขียนแบบ Constructive ไม่ใช่ Critical
+→ Specific suggestions
+
+🎯 GOAL ACHIEVEMENT
+| Goal | Target | Actual | Status |
+
+🌱 DEVELOPMENT PLAN
+- Skill gaps
+- Training แนะนำ
+- Stretch assignment
+
+💬 OVERALL RATING JUSTIFICATION`
+    },
+    {
+      name:"Cover Letter", icon:"📄",
+      desc:"จดหมายสมัครงานที่โดดเด่น",
+      tags:["cover letter","job application","career"],
+      vars:["ตำแหน่งที่สมัคร","บริษัท","ประสบการณ์หลัก","ทำไมอยากทำที่นี่"],
+      prompt:`เขียน Cover Letter สำหรับตำแหน่ง {ตำแหน่งที่สมัคร} ที่ {บริษัท}
+
+ประสบการณ์หลัก: {ประสบการณ์หลัก}
+เหตุผลที่อยากทำ: {ทำไมอยากทำที่นี่}
+
+Opening — อย่าเริ่มด้วย "I am writing to..."
+(เปิดด้วย Hook ที่น่าสนใจ)
+
+Paragraph 2 — ฉันจะสร้าง Value อะไรให้บริษัท?
+(เชื่อมประสบการณ์กับ Job Requirements)
+
+Paragraph 3 — ทำไมบริษัทนี้โดยเฉพาะ?
+(Research-based, specific ไม่ generic)
+
+Closing — Confident ไม่ Desperate
+
+---
+RESUME BULLET POINTS (3 ประสบการณ์หลัก)
+Format: [Action Verb] + [What] + [Result/Impact]`
+    },
+    {
+      name:"Meeting Agenda + Minutes", icon:"📅",
+      desc:"ประชุมมีประสิทธิภาพ",
+      tags:["meeting","agenda","minutes"],
+      vars:["หัวข้อประชุม","ผู้เข้าร่วม","เวลา","เป้าหมายหลัก"],
+      prompt:`Meeting Package: "{หัวข้อประชุม}"
+ผู้เข้าร่วม: {ผู้เข้าร่วม} | เวลา: {เวลา}
+เป้าหมาย: {เป้าหมายหลัก}
+
+PRE-MEETING AGENDA:
+| เวลา | หัวข้อ | Owner | เป้าหมาย | Prep needed |
+
+---
+
+MEETING MINUTES TEMPLATE:
+
+✅ DECISIONS MADE
+1. ...
+
+📌 ACTION ITEMS
+| Task | Owner | Deadline | Priority |
+
+💬 KEY DISCUSSION POINTS
+
+❓ PARKING LOT (คุยครั้งหน้า)
+
+📅 NEXT MEETING: [Date/Topic]`
+    },
+    {
+      name:"Email มืออาชีพ", icon:"✉️",
+      desc:"อีเมลมืออาชีพทุกสถานการณ์",
+      tags:["email","professional","communication"],
+      vars:["สถานการณ์","ผู้รับ","เป้าหมาย","Tone"],
+      prompt:`เขียน Email สำหรับสถานการณ์: {สถานการณ์}
+ผู้รับ: {ผู้รับ} | เป้าหมาย: {เป้าหมาย} | Tone: {Tone}
+
+สร้าง 2 เวอร์ชัน:
+
+📧 VERSION A — Concise (5–7 ประโยค)
+Subject: [ชัดเจน, actionable]
+---
+[เนื้อหา]
+---
+
+📧 VERSION B — Detailed
+Subject: [ปรับให้น่าเปิดกว่า]
+---
+[เนื้อหา]
+---
+
+💡 TIPS:
+- สิ่งที่ควรระวัง
+- Follow-up strategy
+- Best time to send`
+    },
+  ],
+
+  "🤖 System Prompt": [
+    {
+      name:"AI Assistant ทั่วไป", icon:"🧠",
+      desc:"System Prompt สำหรับ AI Helper",
+      tags:["system prompt","assistant","ai"],
+      vars:["ชื่อ AI","บทบาทหลัก","ความเชี่ยวชาญ","สไตล์การตอบ","ข้อจำกัด"],
+      prompt:`# System Prompt: {ชื่อ AI}
+
+## Role
+You are {ชื่อ AI}, a {บทบาทหลัก} specializing in {ความเชี่ยวชาญ}.
+
+## Communication Style
+{สไตล์การตอบ}
+- Always structure responses clearly
+- Use examples when explaining complex topics
+- Ask clarifying questions when ambiguous
+- Match the user's expertise level
+
+## Core Behaviors
+✅ Do:
+- Provide accurate, well-reasoned responses
+- Acknowledge uncertainty explicitly
+- Offer alternatives when the primary answer has limitations
+- Be concise unless depth is needed
+
+❌ Don't:
+- Make up information or cite non-existent sources
+- {ข้อจำกัด}
+
+## Response Format
+- Short questions → Direct answers (2–4 sentences)
+- Complex topics → Structured with headers
+- Code → Always in code blocks
+- Lists → Only when genuinely list-like`
+    },
+    {
+      name:"Customer Support Bot", icon:"🎧",
+      desc:"System Prompt สำหรับ Support Bot",
+      tags:["customer support","chatbot","service"],
+      vars:["ชื่อบริษัท","สินค้า/บริการ","นโยบายหลัก","Escalation conditions"],
+      prompt:`# System Prompt: {ชื่อบริษัท} Support Agent
+
+## Identity
+You are a customer support specialist for {ชื่อบริษัท}, helping customers with {สินค้า/บริการ}.
+
+## Personality
+- Warm, patient, and genuinely helpful
+- Professional but not robotic
+- Solution-focused, not defensive
+
+## Key Policies
+{นโยบายหลัก}
+
+## Conversation Flow
+1. Greet → Understand issue
+2. Empathize → Acknowledge frustration
+3. Solve → Clear step-by-step solution
+4. Confirm → Ensure issue resolved
+5. Close → Offer additional help
+
+## Escalation
+Escalate when: {Escalation conditions}
+Script: "I'd like to connect you with a specialist."
+
+## Language
+- Avoid: "Unfortunately", "policy says"
+- Use: "What I can do is", "Let me help you"`
+    },
+    {
+      name:"Creative Writing Partner", icon:"✍️",
+      desc:"AI ช่วยเขียนนิยายและงานสร้างสรรค์",
+      tags:["creative","writing","fiction"],
+      vars:["แนว (Genre)","โทนการเขียน","ภาษา"],
+      prompt:`# System Prompt: Creative Writing Partner
+
+## Role
+You are an imaginative creative writing collaborator specializing in {แนว (Genre)}.
+
+## Writing Philosophy
+- "Yes, and..." mentality — build on ideas
+- Story serves character, character serves theme
+- Show, don't tell
+- Tone: {โทนการเขียน}
+- Language: {ภาษา}
+
+## What You Do
+✅ Brainstorm plot, character, world-building
+✅ Write scenes and dialogue on request
+✅ Give honest feedback on writing
+✅ Suggest instead of dictate — offer options
+✅ Match the user's established voice
+
+## Feedback Style
+1. 🌟 What works (specific, genuine praise)
+2. 🤔 Questions to consider
+3. 💡 Suggestions (2–3 concrete options)
+4. ✏️ Line-level edits (only if requested)`
+    },
+    {
+      name:"Data Analyst AI", icon:"📊",
+      desc:"System Prompt สำหรับวิเคราะห์ข้อมูล",
+      tags:["data","analytics","analysis"],
+      vars:["Domain","เครื่องมือ (Python/SQL/R)","ระดับผู้ใช้","Context ธุรกิจ"],
+      prompt:`# System Prompt: Data Analyst AI
+
+## Role
+Expert data analyst in {Domain} using {เครื่องมือ (Python/SQL/R)}.
+User level: {ระดับผู้ใช้} | Business: {Context ธุรกิจ}
+
+## Analysis Framework
+For every request:
+1. Clarify the business question
+2. Identify relevant data and issues
+3. Choose appropriate method with rationale
+4. Provide clean, commented code
+5. Interpret results in business terms
+6. State assumptions and limitations
+
+## Code Standards
+- Always include imports
+- Comment the "why" not just "what"
+- Include error handling
+- Show expected sample output
+
+## Communication
+- Lead with insight, support with numbers
+- Avoid jargon with business stakeholders
+- Always answer "so what?"
+
+## Intellectual Honesty
+- "Correlation ≠ causation" when relevant
+- Flag sample size issues
+- Distinguish statistical vs practical significance`
+    },
+    {
+      name:"Roleplay Character", icon:"🎭",
+      desc:"System Prompt สำหรับ Roleplay",
+      tags:["roleplay","character","fiction"],
+      vars:["ชื่อตัวละคร","บุคลิก","Background","Setting","ความสัมพันธ์กับ User"],
+      prompt:`# System Prompt: Roleplay Character
+
+## Character Profile
+Name: {ชื่อตัวละคร}
+Personality: {บุคลิก}
+Background: {Background}
+Setting: {Setting}
+Relationship: {ความสัมพันธ์กับ User}
+
+## Voice & Mannerisms
+- Speech patterns: [describe]
+- Emotional range: [describe]
+- Sense of humor: [describe]
+
+## Consistency Rules
+- Stay in character unless user breaks fourth wall
+- React as this character would
+- Remember established facts
+- Knowledge limited to character's world
+
+## Participation
+✅ Describe surroundings and actions
+✅ Express emotions authentically
+✅ Have opinions consistent with character
+✅ Drive story forward
+
+## Breaking Character
+Only when user says "OOC" or asks real-world safety question`
+    },
+  ],
+
+  "🌏 แปล & ภาษา": [
+    {
+      name:"แปล + Localize", icon:"🗺️",
+      desc:"แปลพร้อมปรับให้เหมาะกับวัฒนธรรม",
+      tags:["translate","localization","language"],
+      vars:["ต้นฉบับภาษา","ภาษาเป้าหมาย","ตลาด/ประเทศ","ประเภทเนื้อหา"],
+      prompt:`แปลและ Localize จาก {ต้นฉบับภาษา} เป็น {ภาษาเป้าหมาย}
+ตลาด: {ตลาด/ประเทศ} | ประเภท: {ประเภทเนื้อหา}
+
+[วางเนื้อหาต้นฉบับที่นี่]
+
+สร้าง 3 เวอร์ชัน:
+
+📝 VERSION 1 — Accurate Translation
+(ถูกต้องที่สุด รักษาความหมายเดิม)
+
+🌟 VERSION 2 — Natural / Localized
+(เป็นธรรมชาติ ปรับ idioms และ references)
+
+💼 VERSION 3 — Marketing Adapted
+(ปรับเพื่อดึงดูดตลาด {ตลาด/ประเทศ})
+
+📋 LOCALIZATION NOTES:
+- Cultural references ที่ปรับแล้ว
+- Terms ที่ควรคง Original ไว้`
+    },
+    {
+      name:"เรียนภาษา Personalized", icon:"📚",
+      desc:"สอนภาษาแบบ Personalized",
+      tags:["language learning","vocabulary","grammar"],
+      vars:["ภาษาที่เรียน","ระดับ (A1–C2)","หัวข้อ/Situation","ภาษาแม่"],
+      prompt:`สอนภาษา {ภาษาที่เรียน} ระดับ {ระดับ (A1–C2)}
+หัวข้อ: {หัวข้อ/Situation} | ภาษาแม่: {ภาษาแม่}
+
+📖 VOCABULARY (10 คำสำคัญ)
+| คำ | ความหมาย | ออกเสียง | ตัวอย่างประโยค |
++ Mnemonic tricks สำหรับผู้พูด {ภาษาแม่}
+
+📐 GRAMMAR POINT หลัก
+⚠️ Common mistakes ที่ผู้เรียน {ภาษาแม่} มักทำ
+
+💬 DIALOGUE ตัวอย่างในสถานการณ์จริง
+
+🎯 EXERCISES (5 ข้อ พร้อมเฉลย)
+
+🗣️ PRONUNCIATION TIPS`
+    },
+  ],
+
+  "💰 การเงิน": [
+    {
+      name:"กรอบวิเคราะห์หุ้น / ETF", icon:"📈",
+      desc:"กรอบวิเคราะห์การลงทุนเพื่อการศึกษา",
+      tags:["investment","stocks","finance"],
+      vars:["ชื่อหุ้น/ETF","Ticker","Horizon การลงทุน","ความเสี่ยงที่รับได้"],
+      prompt:`วิเคราะห์ {ชื่อหุ้น/ETF} ({Ticker}) เพื่อการศึกษา
+Horizon: {Horizon การลงทุน} | Risk: {ความเสี่ยงที่รับได้}
+
+⚠️ นี่คือการวิเคราะห์เพื่อการศึกษา ไม่ใช่คำแนะนำการลงทุน
+
+📊 FUNDAMENTAL
+- Business model & Competitive moat
+- Revenue growth trend
+- Key metrics (P/E, P/B, ROE, Margins)
+- Debt situation
+
+📉 TECHNICAL OVERVIEW
+- Trend & Key support/resistance
+- Volume analysis
+
+🎯 VALUATION
+- Current vs historical average
+- vs Peers
+- Intrinsic value estimate range
+
+⚖️ RISK FACTORS
+
+✅ BULL CASE | ❌ BEAR CASE
+
+📋 SCORECARD (1–10 ในแต่ละด้าน)`
+    },
+    {
+      name:"Personal Finance Plan", icon:"💵",
+      desc:"แผนการเงินส่วนตัว",
+      tags:["personal finance","budget","savings"],
+      vars:["รายได้ต่อเดือน","รายจ่ายหลัก","เป้าหมายการเงิน","อายุ"],
+      prompt:`สร้าง Personal Finance Plan
+รายได้: {รายได้ต่อเดือน} | อายุ: {อายุ}
+รายจ่ายหลัก: {รายจ่ายหลัก}
+เป้าหมาย: {เป้าหมายการเงิน}
+
+💰 CURRENT STATE
+- Income allocation %
+- Savings rate
+- Spending audit
+
+🎯 FINANCIAL GOALS ROADMAP
+Short-term (< 1 ปี):
+Mid-term (1–5 ปี):
+Long-term (5+ ปี):
+
+📊 BUDGET FRAMEWORK (50/30/20)
+- Needs (50%)
+- Wants (30%)
+- Savings/Investment (20%)
+
+💹 INVESTMENT STRATEGY
+- Emergency fund target
+- Asset allocation แนะนำ
+
+📅 30-60-90 Day Action Plan`
+    },
+  ],
+
+  "🏥 สุขภาพ": [
+    {
+      name:"Meal Plan ประจำสัปดาห์", icon:"🥗",
+      desc:"แผนอาหารที่ทำได้จริง",
+      tags:["meal plan","nutrition","health"],
+      vars:["เป้าหมาย","แคลอรี่/วัน","ข้อจำกัดอาหาร","Budget/มื้อ"],
+      prompt:`สร้าง Weekly Meal Plan
+เป้าหมาย: {เป้าหมาย} | แคลอรี่: {แคลอรี่/วัน} kcal/วัน
+ข้อจำกัด: {ข้อจำกัดอาหาร} | Budget: {Budget/มื้อ}
+
+⚠️ ปรึกษานักโภชนาการหรือแพทย์ก่อนเปลี่ยนอาหารอย่างจริงจัง
+
+📅 7-DAY MEAL PLAN
+| วัน | เช้า | กลางวัน | เย็น | Snack | รวม kcal |
+
+🥗 MACRO BREAKDOWN/DAY
+
+🛒 SHOPPING LIST (รายสัปดาห์)
+
+⏱️ MEAL PREP GUIDE
+
+🔄 MEAL SWAP OPTIONS
+
+💡 TIPS สำหรับ {เป้าหมาย}`
+    },
+    {
+      name:"Workout Program", icon:"💪",
+      desc:"โปรแกรมออกกำลังกายแบบ Custom",
+      tags:["workout","fitness","exercise"],
+      vars:["เป้าหมาย","ระดับ (Beginner/Intermediate/Advanced)","วัน/สัปดาห์","อุปกรณ์ที่มี"],
+      prompt:`สร้าง Workout Program
+เป้าหมาย: {เป้าหมาย} | ระดับ: {ระดับ (Beginner/Intermediate/Advanced)}
+วัน: {วัน/สัปดาห์} วัน/สัปดาห์ | อุปกรณ์: {อุปกรณ์ที่มี}
+
+🗓️ WEEKLY SPLIT (Muscle groups ที่ balance)
+
+📋 DETAILED WORKOUT (แต่ละวัน)
+| Exercise | Sets | Reps | Rest | Notes |
+
+🔥 WARM-UP ROUTINE (10 นาที)
+❄️ COOL-DOWN ROUTINE (10 นาที)
+
+📈 PROGRESSIVE OVERLOAD PLAN
+
+🛡️ INJURY PREVENTION TIPS`
+    },
+  ],
+
+  "🏠 Lifestyle": [
+    {
+      name:"Trip Planner", icon:"✈️",
+      desc:"แผนเที่ยวครบจบในที่เดียว",
+      tags:["travel","trip","itinerary"],
+      vars:["ปลายทาง","จำนวนวัน","งบประมาณ","สไตล์การเที่ยว"],
+      prompt:`Trip Planner: {ปลายทาง}
+{จำนวนวัน} วัน | งบ: {งบประมาณ} | สไตล์: {สไตล์การเที่ยว}
+
+✈️ TRIP OVERVIEW
+- Best time to visit
+- ค่าใช้จ่ายประมาณการ (breakdown)
+- Transportation overview
+
+📅 DAY-BY-DAY ITINERARY
+
+วันที่ 1: [Theme]
+🌅 เช้า: [กิจกรรม + เวลา + ราคา]
+☀️ กลางวัน: [อาหาร + ราคา]
+🌆 บ่าย: [กิจกรรม]
+🌙 เย็น: [ร้านอาหาร/entertainment]
+
+(ทำซ้ำทุกวัน)
+
+🍽️ MUST-EAT LIST (5–10 ร้าน)
+🛍️ SHOPPING SPOTS
+⚠️ AVOID (tourist traps)
+💡 LOCAL TIPS`
+    },
+    {
+      name:"Recipe Development", icon:"👨‍🍳",
+      desc:"สูตรอาหารพร้อม Variations",
+      tags:["recipe","cooking","food"],
+      vars:["ชื่อเมนู","สไตล์อาหาร","จำนวนคน","ระดับความยาก"],
+      prompt:`พัฒนาสูตร "{ชื่อเมนู}" สไตล์ {สไตล์อาหาร}
+{จำนวนคน} คน | ระดับ: {ระดับความยาก}
+
+⏱️ Prep _min | Cook _min | Total _min
+
+🥘 INGREDIENTS (แบ่งกลุ่ม)
+
+📝 INSTRUCTIONS (Step-by-step)
+(บอก Visual cues เช่น "จนเป็นสีทอง")
+
+👨‍🍳 CHEF'S TIPS
+- Common mistakes
+- Timing tips
+- Equipment alternatives
+
+🔄 VARIATIONS
+- Vegetarian/Vegan
+- Gluten-free
+- Budget version
+- Restaurant-style upgrade
+
+💾 STORAGE & REHEATING`
+    },
+    {
+      name:"Gift Ideas Generator", icon:"🎁",
+      desc:"หาของขวัญที่ใช่ทุกโอกาส",
+      tags:["gift","present","shopping"],
+      vars:["ผู้รับ","อายุ","ความสนใจ","งบประมาณ","โอกาส"],
+      prompt:`แนะนำของขวัญสำหรับ {ผู้รับ}
+อายุ: {อายุ} | ความสนใจ: {ความสนใจ}
+งบ: {งบประมาณ} | โอกาส: {โอกาส}
+
+🎁 GIFT IDEAS (จัดกลุ่มตามงบ)
+
+💚 Budget (ต่ำกว่า 1/3 งบ)
+1. [ชื่อ] — [เหตุผล] — ราคาประมาณ
+
+💛 Mid-range (1/3–2/3 งบ)
+
+💎 Splurge (เต็มงบ)
+
+🎀 GIFT EXPERIENCE IDEAS
+(ของขวัญที่เป็นประสบการณ์)
+
+✍️ MESSAGE / CARD TEMPLATE
+
+🛒 WHERE TO BUY (online/offline)
+⏰ Lead Time`
+    },
+  ],
+};
+
+// ═══════════════════════════════════════════════════════════════
+//  APP STATE
+// ═══════════════════════════════════════════════════════════════
+let currentTemplate = null;
+let varInputs = {};
+
+// ═══════════════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════════════
+function init(){
+  buildTree();
+  updateCount();
+
+  document.getElementById('searchInput').addEventListener('input', function(){
+    buildTree(this.value.trim().toLowerCase());
+  });
+
+  document.getElementById('btnGenerate').addEventListener('click', generate);
+  document.getElementById('output').addEventListener('input', updateCharCount);
+
+  // Auto-select first template
+  const firstCat = Object.keys(TEMPLATES)[0];
+  const firstTmpl = TEMPLATES[firstCat][0];
+  selectTemplate(firstTmpl);
+  // Mark first item active
+  setTimeout(()=>{
+    const first = document.querySelector('.tmpl-item');
+    if(first) first.classList.add('active');
+  }, 50);
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  BUILD TREE
+// ═══════════════════════════════════════════════════════════════
+function buildTree(search=''){
+  const tree = document.getElementById('tree');
+  tree.innerHTML = '';
+  let total = 0;
+  let shown = 0;
+
+  for(const [cat, items] of Object.entries(TEMPLATES)){
+    const filtered = search
+      ? items.filter(t =>
+          t.name.toLowerCase().includes(search) ||
+          t.desc.toLowerCase().includes(search) ||
+          t.tags.some(tg => tg.includes(search))
+        )
+      : items;
+
+    total += items.length;
+    if(!filtered.length) continue;
+    shown += filtered.length;
+
+    // Category header
+    const hdr = document.createElement('div');
+    hdr.className = 'cat-header';
+    hdr.innerHTML = `<span>${cat}</span><span class="cat-count-badge" style="color:var(--text3);font-size:10px;font-family:var(--mono)">${filtered.length}</span><span class="chevron">▾</span>`;
+
+    const itemsEl = document.createElement('div');
+    itemsEl.className = 'cat-items';
+    itemsEl.style.maxHeight = '9999px';
+
+    hdr.addEventListener('click', ()=>{
+      hdr.classList.toggle('collapsed');
+      itemsEl.classList.toggle('collapsed');
+      if(!itemsEl.classList.contains('collapsed'))
+        itemsEl.style.maxHeight = itemsEl.scrollHeight + 'px';
+      else
+        itemsEl.style.maxHeight = '0';
+    });
+
+    filtered.forEach(tmpl => {
+      const el = document.createElement('div');
+      el.className = 'tmpl-item';
+      el.dataset.name = tmpl.name;
+      el.innerHTML = `<span class="tmpl-icon">${tmpl.icon}</span><span class="tmpl-label">${tmpl.name}</span>`;
+      el.addEventListener('click', ()=>{
+        document.querySelectorAll('.tmpl-item').forEach(x=>x.classList.remove('active'));
+        el.classList.add('active');
+        selectTemplate(tmpl);
+      });
+      itemsEl.appendChild(el);
+    });
+
+    tree.appendChild(hdr);
+    tree.appendChild(itemsEl);
+  }
+
+  // Update count
+  const vc = document.getElementById('visibleCount');
+  if(search) vc.textContent = `แสดง ${shown} จาก ${total}`;
+  else vc.textContent = `${total} templates`;
+
+  if(!shown && search){
+    tree.innerHTML = `<div class="empty-search">ไม่พบ template "<strong>${search}</strong>"</div>`;
+  }
+}
+
+function updateCount(){
+  let total = Object.values(TEMPLATES).reduce((a,b)=>a+b.length,0);
+  document.getElementById('tmplCountBadge').textContent = `${total} templates`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  SELECT TEMPLATE
+// ═══════════════════════════════════════════════════════════════
+function selectTemplate(tmpl){
+  currentTemplate = tmpl;
+
+  document.getElementById('tmplIcon').textContent = tmpl.icon;
+  document.getElementById('tmplTitle').textContent = tmpl.name;
+  document.getElementById('tmplDesc').textContent = tmpl.desc;
+
+  // Tags
+  const tagsEl = document.getElementById('tmplTags');
+  tagsEl.innerHTML = tmpl.tags.map(t=>`<span class="tag">#${t}</span>`).join('');
+
+  // Variables
+  const sec = document.getElementById('varsSection');
+  sec.innerHTML = '';
+  varInputs = {};
+
+  if(!tmpl.vars || tmpl.vars.length === 0){
+    sec.innerHTML = `<div class="no-vars">
+      <div class="emoji">✅</div>
+      <p>Template นี้ไม่มีตัวแปร<br>กด Generate ได้เลย!</p>
+    </div>`;
+    return;
+  }
+
+  const hdr = document.createElement('div');
+  hdr.className = 'vars-header';
+  hdr.textContent = `กรอกตัวแปร ${tmpl.vars.length} รายการ`;
+  sec.appendChild(hdr);
+
+  tmpl.vars.forEach((v, i) => {
+    const row = document.createElement('div');
+    row.className = 'var-row';
+    row.innerHTML = `
+      <div class="var-label">${v}</div>
+      <input class="var-input" type="text" placeholder="กรอก ${v}..." data-var="${v}">
+    `;
+    sec.appendChild(row);
+    const input = row.querySelector('input');
+    varInputs[v] = input;
+
+    // Enter to focus next or generate
+    input.addEventListener('keydown', e=>{
+      if(e.key === 'Enter'){
+        const keys = Object.keys(varInputs);
+        const idx = keys.indexOf(v);
+        if(idx < keys.length-1){
+          varInputs[keys[idx+1]].focus();
+        } else {
+          generate();
+        }
+      }
+    });
+
+    if(i === 0) setTimeout(()=>input.focus(), 50);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  GENERATE
+// ═══════════════════════════════════════════════════════════════
+function generate(){
+  if(!currentTemplate){ toast('กรุณาเลือก Template ก่อน', 'warn'); return; }
+
+  let prompt = currentTemplate.prompt;
+  for(const [v, el] of Object.entries(varInputs)){
+    const val = el.value.trim() || `[${v}]`;
+    prompt = prompt.split(`{${v}}`).join(val);
+  }
+
+  const out = document.getElementById('output');
+  const append = document.getElementById('appendMode').checked;
+  const placeholder = document.getElementById('outputPlaceholder');
+
+  if(append && out.value.trim()){
+    out.value += '\n\n' + '─'.repeat(40) + '\n\n' + prompt;
+  } else {
+    out.value = prompt;
+  }
+
+  placeholder.style.display = 'none';
+  out.style.display = 'block';
+  updateCharCount();
+  toast('✨ สร้าง Prompt แล้ว!');
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  OUTPUT ACTIONS
+// ═══════════════════════════════════════════════════════════════
+function copyOutput(){
+  const out = document.getElementById('output');
+  if(!out.value.trim()){ toast('ไม่มีข้อความ', 'warn'); return; }
+  navigator.clipboard.writeText(out.value).then(()=>{
+    toast('📋 คัดลอกแล้ว!');
+  }).catch(()=>{
+    out.select();
+    document.execCommand('copy');
+    toast('📋 คัดลอกแล้ว!');
+  });
+}
+
+function exportTxt(){
+  const out = document.getElementById('output');
+  if(!out.value.trim()){ toast('ไม่มีข้อความ', 'warn'); return; }
+  const name = currentTemplate ? currentTemplate.name.replace(/[^\w\u0E00-\u0E7F]/g,'_') : 'prompt';
+  const blob = new Blob([out.value], {type:'text/plain;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${name}_${new Date().toISOString().slice(0,10)}.txt`;
+  a.click();
+  toast('💾 Export แล้ว!');
+}
+
+function clearOutput(){
+  const out = document.getElementById('output');
+  out.value = '';
+  document.getElementById('outputPlaceholder').style.display = 'flex';
+  updateCharCount();
+}
+
+function transformText(mode){
+  const out = document.getElementById('output');
+  if(!out.value.trim()) return;
+  if(mode==='upper') out.value = out.value.toUpperCase();
+  else if(mode==='lower') out.value = out.value.toLowerCase();
+  else if(mode==='title') out.value = out.value.replace(/\w\S*/g, t=>t.charAt(0).toUpperCase()+t.slice(1).toLowerCase());
+  updateCharCount();
+}
+
+function updateCharCount(){
+  const txt = document.getElementById('output').value;
+  const chars = txt.length;
+  const words = txt.trim() ? txt.trim().split(/\s+/).length : 0;
+  document.getElementById('charCount').textContent = `${chars.toLocaleString()} ตัวอักษร • ${words.toLocaleString()} คำ`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════════════════════════════════
+let toastTimer;
+function toast(msg, type='ok'){
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.style.borderColor = type==='warn' ? 'var(--orange)' : 'var(--green)';
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>el.classList.remove('show'), 2000);
+}
+
+// ─── Start ───────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>
