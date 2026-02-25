@@ -300,15 +300,210 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:6px}
 ::-webkit-scrollbar-thumb:hover{background:var(--border2)}
 
+/* ─── Mobile Bottom Nav ──────────────────────────────────────── */
+.mob-nav{display:none}
+
 /* ─── Responsive ─────────────────────────────────────────────── */
-@media(max-width:900px){
-  .main{grid-template-columns:240px 1fr}
-  .right{display:none}
-  body{overflow:auto}
-  html,body{height:auto}
-  .app{height:auto;overflow:visible}
-  .main{height:calc(100vh - 52px)}
+@media(max-width:768px){
+
+  /* ── reset layout to single-column panels ── */
+  html,body{height:100%;overflow:hidden}
+  .app{display:flex;flex-direction:column;height:calc(100dvh - 56px);overflow:hidden}
+
+  .main{
+    display:block;flex:1;overflow:hidden;position:relative;
+  }
+
+  /* ── topbar shrink ── */
+  .topbar{padding:0 14px;height:48px}
+  .topbar-logo .name{font-size:13px}
+  .topbar-logo .ver{display:none}
+  .topbar-link{display:none}
+  .topbar-badge{font-size:10px;padding:2px 6px}
+
+  /* ── Panels: each fills the screen, shown/hidden by JS ── */
+  .sidebar,.center,.right{
+    position:absolute;inset:0;
+    width:100%;height:100%;
+    display:flex;flex-direction:column;overflow:hidden;
+    transition:transform .28s cubic-bezier(.4,0,.2,1), opacity .25s;
+    will-change:transform;
+  }
+
+  /* panel hidden states */
+  .sidebar.mob-hidden  {transform:translateX(-100%);opacity:0;pointer-events:none}
+  .center.mob-hidden   {transform:translateX(100%); opacity:0;pointer-events:none}
+  .right.mob-hidden    {transform:translateX(100%); opacity:0;pointer-events:none}
+  .sidebar.mob-visible {transform:translateX(0);    opacity:1;pointer-events:auto}
+  .center.mob-visible  {transform:translateX(0);    opacity:1;pointer-events:auto}
+  .right.mob-visible   {transform:translateX(0);    opacity:1;pointer-events:auto}
+
+  /* borders not needed on mobile */
+  .sidebar{border-right:none}
+  .center{border-right:none}
+
+  /* ── Tree items bigger touch targets ── */
+  .tmpl-item{padding:11px 12px}
+  .tmpl-label{font-size:13.5px}
+  .cat-header{padding:10px 10px 6px;font-size:11.5px}
+
+  /* ── Template info panel ── */
+  .tmpl-info{padding:14px 16px}
+  .tmpl-big-icon{font-size:30px}
+  .tmpl-title{font-size:15px}
+
+  /* ── Var inputs bigger ── */
+  .vars-section{padding:14px 16px;padding-bottom:0}
+  .var-input{font-size:15px;padding:11px 14px}
+  .var-label{font-size:12px}
+  .vars-header{font-size:11px}
+
+  /* ── Generate area ── */
+  .gen-area{padding:12px 16px;border-top:1px solid var(--border)}
+  .btn-generate{padding:14px 20px;font-size:15px;border-radius:10px}
+
+  /* ── Output ── */
+  .out-header{padding:12px 16px}
+  .output{font-size:13px;padding:14px}
+  .out-actions{padding:10px 14px}
+  .out-actions-row{gap:8px}
+  .btn{padding:10px 12px;font-size:13px;border-radius:8px}
+  .btn-sm{padding:5px 10px;font-size:11px}
+  .transform-row{flex-wrap:wrap;gap:6px}
+  .transform-label{width:100%;margin-bottom:2px}
+
+  /* ── Bottom Nav ── */
+  .mob-nav{
+    display:flex;height:56px;flex-shrink:0;
+    background:var(--bg2);border-top:1px solid var(--border);
+    position:relative;z-index:100;
+  }
+  .mob-tab{
+    flex:1;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;gap:3px;cursor:pointer;
+    transition:color .15s;color:var(--text3);border:none;
+    background:none;font-family:var(--sans);
+    -webkit-tap-highlight-color:transparent;
+    position:relative;
+  }
+  .mob-tab.active{color:var(--accent)}
+  .mob-tab .tab-icon{font-size:20px;line-height:1}
+  .mob-tab .tab-label{font-size:10px;font-weight:600;letter-spacing:.3px}
+  .mob-tab.active::after{
+    content:'';position:absolute;top:0;left:20%;right:20%;
+    height:2px;background:var(--accent);border-radius:0 0 2px 2px;
+  }
+  /* badge on output tab */
+  .mob-tab .tab-badge{
+    position:absolute;top:6px;right:calc(50% - 18px);
+    width:8px;height:8px;border-radius:50%;
+    background:var(--green);border:2px solid var(--bg2);
+    display:none;
+  }
+  .mob-tab .tab-badge.show{display:block}
+
+  /* ── Step indicator in center panel ── */
+  .mob-step-hint{
+    font-size:11px;color:var(--text3);text-align:right;
+    padding:4px 16px 0;font-family:var(--mono);
+  }
+  .mob-next-btn{
+    width:100%;background:var(--bg3);color:var(--accent);
+    border:1px dashed var(--accent);border-radius:var(--r);
+    padding:10px;font-family:var(--sans);font-size:13px;font-weight:600;
+    cursor:pointer;margin-top:8px;display:flex;align-items:center;
+    justify-content:center;gap:6px;
+    -webkit-tap-highlight-color:transparent;
+  }
+
+  /* ── Sidebar: back to selected ── */
+  .sidebar-selected-bar{
+    display:flex;align-items:center;gap:8px;
+    padding:8px 14px;background:var(--tag-bg);
+    border-bottom:1px solid var(--border);
+    font-size:12px;color:var(--accent);flex-shrink:0;
+  }
+  .sidebar-selected-bar .sel-icon{font-size:16px}
+  .sidebar-selected-bar .sel-name{flex:1;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+  /* hide desktop-only elements */
+  .output-placeholder .ph-steps{display:none}
+  .output-placeholder .ph-icon{font-size:32px}
+
+  /* ── toast higher to avoid nav ── */
+  #toast{bottom:72px}
+
+  /* ── no-vars msg smaller ── */
+  .no-vars{padding:24px 16px}
 }
+
+/* Tablet: 768–1024, show 2 columns */
+@media(min-width:769px) and (max-width:1024px){
+  .main{grid-template-columns:260px 1fr}
+  .right{display:none}
+  .sidebar-selected-bar{display:none}
+  /* floating output button */
+  .mob-fab{
+    display:flex;align-items:center;justify-content:center;gap:6px;
+    position:fixed;bottom:20px;right:20px;z-index:200;
+    background:var(--accent);color:#fff;border:none;border-radius:50px;
+    padding:12px 20px;font-family:var(--sans);font-size:13px;font-weight:700;
+    cursor:pointer;box-shadow:0 4px 20px rgba(88,166,255,.4);
+    transition:all .15s;
+  }
+  .mob-fab:hover{background:var(--accent2);transform:translateY(-2px)}
+  .mob-fab .fab-badge{
+    background:var(--green);color:#fff;font-size:10px;font-weight:700;
+    border-radius:10px;padding:1px 6px;min-width:18px;text-align:center;
+    display:none;
+  }
+  .mob-fab .fab-badge.show{display:inline-block}
+}
+
+/* ── Output sheet (mobile/tablet) ── */
+.out-sheet-overlay{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);
+  z-index:300;backdrop-filter:blur(2px);
+  opacity:0;transition:opacity .25s;
+}
+.out-sheet-overlay.open{opacity:1}
+.out-sheet{
+  position:fixed;bottom:0;left:0;right:0;z-index:301;
+  background:var(--bg2);border-top:2px solid var(--border2);
+  border-radius:16px 16px 0 0;
+  display:flex;flex-direction:column;
+  max-height:90dvh;min-height:60dvh;
+  transform:translateY(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);
+}
+.out-sheet.open{transform:translateY(0)}
+.sheet-handle{
+  width:40px;height:4px;border-radius:4px;background:var(--border2);
+  margin:10px auto 6px;flex-shrink:0;cursor:grab;
+}
+.sheet-header{
+  display:flex;align-items:center;padding:6px 16px 12px;
+  flex-shrink:0;gap:10px;border-bottom:1px solid var(--border);
+}
+.sheet-title{font-weight:700;font-size:14px;flex:1}
+.sheet-close{
+  background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);
+  padding:6px 12px;color:var(--text2);font-size:12px;cursor:pointer;
+  font-family:var(--sans);
+}
+.sheet-output-wrap{flex:1;overflow:hidden;position:relative}
+.sheet-output{
+  width:100%;height:100%;background:var(--bg);
+  color:var(--text);font-family:var(--mono);font-size:13px;
+  line-height:1.7;border:none;outline:none;resize:none;padding:16px;
+  overflow-y:auto;
+}
+.sheet-actions{
+  padding:12px 16px;background:var(--bg2);
+  border-top:1px solid var(--border);flex-shrink:0;
+  display:flex;flex-direction:column;gap:8px;
+}
+.sheet-actions-row{display:flex;gap:8px}
+.sheet-char-count{font-size:11px;color:var(--text3);font-family:var(--mono);padding-bottom:4px}
 </style>
 </head>
 <body>
@@ -332,6 +527,11 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 
   <!-- ── Sidebar ─────────────────────────────────────────────── -->
   <aside class="sidebar">
+    <div class="sidebar-selected-bar" id="selectedBar" style="display:none">
+      <span class="sel-icon" id="selBarIcon">📝</span>
+      <span class="sel-name" id="selBarName">เลือก Template แล้ว</span>
+      <span style="font-size:11px;color:var(--text3)">แตะ ตัวแปร ด้านล่าง ▶</span>
+    </div>
     <div class="sidebar-search">
       <div class="search-box">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
@@ -412,6 +612,50 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 
 </div><!-- /main -->
 </div><!-- /app -->
+
+<!-- Mobile Bottom Nav -->
+<nav class="mob-nav" id="mobNav">
+  <button class="mob-tab active" id="tabTemplates" onclick="mobSwitch('templates')">
+    <span class="tab-icon">📂</span>
+    <span class="tab-label">Templates</span>
+  </button>
+  <button class="mob-tab" id="tabVars" onclick="mobSwitch('vars')">
+    <span class="tab-icon">🔧</span>
+    <span class="tab-label">ตัวแปร</span>
+  </button>
+  <button class="mob-tab" id="tabOutput" onclick="openOutputPanel()">
+    <span class="tab-icon">📝</span>
+    <span class="tab-label">Output</span>
+    <span class="tab-badge" id="outputBadge"></span>
+  </button>
+</nav>
+
+<!-- Output Sheet (mobile/tablet) -->
+<div class="out-sheet-overlay" id="sheetOverlay" onclick="closeSheet()"></div>
+<div class="out-sheet" id="outSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <span class="sheet-title">📝 Generated Prompt</span>
+    <span class="sheet-char-count" id="sheetCharCount">0 ตัวอักษร</span>
+    <button class="sheet-close" onclick="closeSheet()">✕ ปิด</button>
+  </div>
+  <div class="sheet-output-wrap">
+    <textarea class="sheet-output" id="sheetOutput" spellcheck="false"></textarea>
+  </div>
+  <div class="sheet-actions">
+    <div class="sheet-actions-row">
+      <button class="btn primary" onclick="copySheetOutput()">📋 Copy</button>
+      <button class="btn success" onclick="exportTxt()">💾 Export .txt</button>
+    </div>
+    <div class="sheet-actions-row">
+      <span style="color:var(--text3);font-size:11px">Transform:</span>
+      <button class="btn-sm" onclick="transformSheet('upper')">UPPER</button>
+      <button class="btn-sm" onclick="transformSheet('lower')">lower</button>
+      <button class="btn-sm" onclick="transformSheet('title')">Title</button>
+      <button class="btn-sm" onclick="clearAll()" style="margin-left:auto;color:var(--orange)">Clear</button>
+    </div>
+  </div>
+</div>
 
 <div id="toast"></div>
 
@@ -1861,8 +2105,246 @@ function toast(msg, type='ok'){
   toastTimer = setTimeout(()=>el.classList.remove('show'), 2000);
 }
 
+
+// ═══════════════════════════════════════════════════════════════
+//  MOBILE / RESPONSIVE
+// ═══════════════════════════════════════════════════════════════
+
+const isMobile = () => window.innerWidth <= 768;
+const isTablet = () => window.innerWidth > 768 && window.innerWidth <= 1024;
+
+let mobActive = 'templates'; // 'templates' | 'vars' | 'output'
+let hasOutput  = false;
+
+// ── Mobile panel switching ────────────────────────────────────
+function mobSwitch(tab){
+  if(!isMobile()) return;
+  mobActive = tab;
+
+  const sidebar = document.querySelector('.sidebar');
+  const center  = document.querySelector('.center');
+
+  document.querySelectorAll('.mob-tab').forEach(t=>t.classList.remove('active'));
+
+  if(tab === 'templates'){
+    document.getElementById('tabTemplates').classList.add('active');
+    sidebar.classList.remove('mob-hidden'); sidebar.classList.add('mob-visible');
+    center.classList.remove('mob-visible'); center.classList.add('mob-hidden');
+  } else if(tab === 'vars'){
+    document.getElementById('tabVars').classList.add('active');
+    center.classList.remove('mob-hidden');  center.classList.add('mob-visible');
+    sidebar.classList.remove('mob-visible');sidebar.classList.add('mob-hidden');
+  } else if(tab === 'output'){
+    // handled by openOutputPanel
+  }
+}
+
+function openOutputPanel(){
+  if(isMobile()){
+    // show as full-screen panel (3rd panel)
+    document.querySelectorAll('.mob-tab').forEach(t=>t.classList.remove('active'));
+    document.getElementById('tabOutput').classList.add('active');
+    const right = document.querySelector('.right');
+    const sidebar = document.querySelector('.sidebar');
+    const center  = document.querySelector('.center');
+    right.classList.remove('mob-hidden');  right.classList.add('mob-visible');
+    sidebar.classList.remove('mob-visible');sidebar.classList.add('mob-hidden');
+    center.classList.remove('mob-visible'); center.classList.add('mob-hidden');
+    mobActive = 'output';
+  } else {
+    openSheet();
+  }
+}
+
+// ── Sheet (tablet overlay) ─────────────────────────────────────
+function openSheet(){
+  const overlay = document.getElementById('sheetOverlay');
+  const sheet   = document.getElementById('outSheet');
+  // sync content
+  syncSheet();
+  overlay.style.display='block';
+  sheet.style.display='flex';
+  requestAnimationFrame(()=>{
+    overlay.classList.add('open');
+    sheet.classList.add('open');
+  });
+  document.body.style.overflow='hidden';
+}
+
+function closeSheet(){
+  const overlay = document.getElementById('sheetOverlay');
+  const sheet   = document.getElementById('outSheet');
+  overlay.classList.remove('open');
+  sheet.classList.remove('open');
+  setTimeout(()=>{
+    overlay.style.display='none';
+    sheet.style.display='none';
+    document.body.style.overflow='';
+  }, 300);
+  // if mobile output tab was active, go back to vars
+  if(isMobile() && mobActive === 'output'){
+    mobSwitch('vars');
+  }
+}
+
+function syncSheet(){
+  const mainOutput  = document.getElementById('output');
+  const sheetOutput = document.getElementById('sheetOutput');
+  const sheetCC     = document.getElementById('sheetCharCount');
+  sheetOutput.value = mainOutput.value;
+  const txt = mainOutput.value;
+  const w   = txt.trim() ? txt.trim().split(/\s+/).length : 0;
+  sheetCC.textContent = `${txt.length.toLocaleString()} ตัวอักษร • ${w.toLocaleString()} คำ`;
+}
+
+function copySheetOutput(){
+  const txt = document.getElementById('sheetOutput').value;
+  if(!txt){ toast('ไม่มีข้อความ','warn'); return; }
+  navigator.clipboard.writeText(txt).then(()=>toast('📋 คัดลอกแล้ว!')).catch(()=>{
+    document.getElementById('sheetOutput').select();
+    document.execCommand('copy');
+    toast('📋 คัดลอกแล้ว!');
+  });
+}
+
+function transformSheet(mode){
+  const so = document.getElementById('sheetOutput');
+  const mo = document.getElementById('output');
+  if(!so.value) return;
+  let v = so.value;
+  if(mode==='upper') v=v.toUpperCase();
+  else if(mode==='lower') v=v.toLowerCase();
+  else if(mode==='title') v=v.replace(/\w\S*/g,t=>t.charAt(0).toUpperCase()+t.slice(1).toLowerCase());
+  so.value = v;
+  mo.value = v;
+  updateCharCount();
+  syncSheet();
+}
+
+function clearAll(){
+  document.getElementById('output').value='';
+  document.getElementById('sheetOutput').value='';
+  document.getElementById('outputPlaceholder').style.display='flex';
+  updateCharCount();
+  markOutputDone(false);
+}
+
+// ── Mark output has content ────────────────────────────────────
+function markOutputDone(has){
+  hasOutput = has;
+  const badge   = document.getElementById('outputBadge');
+  const mobFab  = document.getElementById('mobFab');
+  if(badge)  badge.classList.toggle('show', has);
+  if(isMobile()){
+    // nothing extra needed, badge handles it
+  } else if(isTablet()){
+    if(mobFab) mobFab.style.display = has ? 'flex' : 'none';
+  }
+}
+
+// ── Init mobile layout ─────────────────────────────────────────
+function initMobile(){
+  if(!isMobile()) return;
+  const sidebar = document.querySelector('.sidebar');
+  const center  = document.querySelector('.center');
+  const right   = document.querySelector('.right');
+  sidebar.classList.add('mob-visible');
+  center.classList.add('mob-hidden');
+  right.classList.add('mob-hidden');
+}
+
+function initTablet(){
+  if(!isTablet()) return;
+  const fab = document.getElementById('mobFab');
+  if(fab && hasOutput) fab.style.display='flex';
+}
+
+// ── Re-init on resize ─────────────────────────────────────────
+let resizeTimer;
+window.addEventListener('resize', ()=>{
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(()=>{
+    const sidebar = document.querySelector('.sidebar');
+    const center  = document.querySelector('.center');
+    const right   = document.querySelector('.right');
+    if(!isMobile()){
+      // Desktop: reset all panel classes
+      sidebar.classList.remove('mob-hidden','mob-visible');
+      center.classList.remove('mob-hidden','mob-visible');
+      right.classList.remove('mob-hidden','mob-visible');
+      closeSheet();
+    } else {
+      initMobile();
+    }
+  }, 150);
+});
+
+// ── Swipe to close sheet ───────────────────────────────────────
+(()=>{
+  let startY=0, isDragging=false;
+  const handle = document.querySelector('.sheet-handle');
+  const sheet  = document.getElementById('outSheet');
+  if(!handle || !sheet) return;
+
+  handle.addEventListener('touchstart', e=>{startY=e.touches[0].clientY; isDragging=true;}, {passive:true});
+  document.addEventListener('touchmove', e=>{
+    if(!isDragging) return;
+    const dy = e.touches[0].clientY - startY;
+    if(dy > 0) sheet.style.transform = `translateY(${dy}px)`;
+  }, {passive:true});
+  document.addEventListener('touchend', e=>{
+    if(!isDragging) return;
+    isDragging=false;
+    const dy = e.changedTouches[0].clientY - startY;
+    sheet.style.transform='';
+    if(dy > 120) closeSheet();
+  });
+})();
+
+// ── After template select on mobile: auto-go to vars ──────────
+const _origSelectTemplate = selectTemplate;
+selectTemplate = function(tmpl){
+  _origSelectTemplate(tmpl);
+  // update selected bar in sidebar
+  const bar = document.getElementById('selectedBar');
+  const barIcon = document.getElementById('selBarIcon');
+  const barName = document.getElementById('selBarName');
+  if(bar){
+    bar.style.display='flex';
+    if(barIcon) barIcon.textContent = tmpl.icon;
+    if(barName) barName.textContent = tmpl.name;
+  }
+  if(isMobile() && mobActive === 'templates'){
+    setTimeout(()=> mobSwitch('vars'), 200);
+  }
+};
+
+// ── After generate: badge + auto open ─────────────────────────
+const _origGenerate = generate;
+generate = function(){
+  _origGenerate();
+  const out = document.getElementById('output');
+  if(out.value.trim()){
+    markOutputDone(true);
+    syncSheet();
+    if(isMobile()){
+      // show output tab
+      openOutputPanel();
+    }
+  }
+};
+
+// ── After clearOutput: remove badge ───────────────────────────
+const _origClear = clearOutput;
+clearOutput = function(){
+  _origClear();
+  markOutputDone(false);
+};
+
 // ─── Start ───────────────────────────────────────────────────
 init();
+initMobile();
+initTablet();
 </script>
 </body>
 </html>
